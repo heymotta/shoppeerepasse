@@ -55,11 +55,13 @@ async function resolveToCanonicalShopeeUrl(url) {
   if (!url) return url;
   let targetUrl = url.trim();
 
+  // Se já for uma URL canônica de produto
   const directMatch = targetUrl.match(/(?:product\/|\/opaanlp\/)(\d+)\/(\d+)/i) || targetUrl.match(/-i\.(\d+)\.(\d+)/i);
   if (directMatch) {
     return `https://shopee.com.br/product/${directMatch[1]}/${directMatch[2]}`;
   }
 
+  // Se for shortlink (s.shopee.com.br ou shp.ee), resolve o redirecionamento
   try {
     const res = await fetch(targetUrl, {
       method: 'GET',
@@ -103,28 +105,53 @@ async function generateShortLink(originUrl) {
   return data?.generateShortLink?.shortLink || null;
 }
 
-async function getProductImage(textContent) {
-  if (!textContent) return null;
-  const keyword = extractProductFromText(textContent);
-  if (!keyword || keyword.length < 3) return null;
-
-  const queries = generateSearchQueries(keyword);
-  for (const q of queries) {
-    try {
-      const query = `query SearchImage($keyword: String!) {
-        productOfferV2(keyword: $keyword, limit: 1) {
-          nodes {
-            imageUrl
+async function getProductImage(textContent, canonicalUrl = '') {
+  // 1. Prioridade Máxima: busca a foto direta pelo itemId extraído da URL do produto
+  if (canonicalUrl) {
+    const match = canonicalUrl.match(/(?:product\/|\/opaanlp\/|\/i\.)\d+[\/.](\d+)/i) || canonicalUrl.match(/(\d{7,15})/);
+    if (match && match[1]) {
+      const itemId = match[1];
+      try {
+        const query = `query GetByItemId {
+          productOfferV2(itemId: ${itemId}, limit: 1) {
+            nodes {
+              imageUrl
+            }
           }
+        }`;
+        const data = await callShopee(query);
+        const img = data?.productOfferV2?.nodes?.[0]?.imageUrl;
+        if (img) {
+          return img.endsWith('.jpg') ? img : `${img}.jpg`;
         }
-      }`;
-      const data = await callShopee(query, { keyword: q });
-      const img = data?.productOfferV2?.nodes?.[0]?.imageUrl;
-      if (img) {
-        return img.endsWith('.jpg') ? img : `${img}.jpg`;
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
   }
+
+  // 2. Fallback: busca por palavras-chave extraídas do texto
+  if (textContent) {
+    const keyword = extractProductFromText(textContent);
+    if (keyword && keyword.length >= 3) {
+      const queries = generateSearchQueries(keyword);
+      for (const q of queries) {
+        try {
+          const query = `query SearchImage($keyword: String!) {
+            productOfferV2(keyword: $keyword, limit: 1) {
+              nodes {
+                imageUrl
+              }
+            }
+          }`;
+          const data = await callShopee(query, { keyword: q });
+          const img = data?.productOfferV2?.nodes?.[0]?.imageUrl;
+          if (img) {
+            return img.endsWith('.jpg') ? img : `${img}.jpg`;
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
   return null;
 }
 
@@ -147,7 +174,7 @@ async function convertShopeeLink(originalUrl, textContent = '') {
     }
 
     if (shortLink) {
-      const imageUrl = await getProductImage(textContent);
+      const imageUrl = await getProductImage(textContent, canonicalUrl);
       return {
         available: true,
         url: shortLink,
