@@ -32,10 +32,10 @@ function safeSettings() {
   return {
     evolution_url: setting('evolution_url') || process.env.EVOLUTION_URL || '',
     evolution_instance: setting('evolution_instance') || process.env.EVOLUTION_INSTANCE || '',
-    request_timeout: setting('request_timeout', '15000'),
-    max_attempts: setting('max_attempts', '3'),
-    send_without_link: setting('send_without_link', '0'),
-    bot_active: setting('bot_active', '0'),
+    request_timeout: setting('request_timeout') || process.env.REQUEST_TIMEOUT || '15000',
+    max_attempts: setting('max_attempts') || process.env.MAX_ATTEMPTS || '3',
+    send_without_link: setting('send_without_link') || process.env.SEND_WITHOUT_LINK || '0',
+    bot_active: setting('bot_active') || process.env.BOT_ACTIVE || '1',
     shopee_app_id: setting('shopee_app_id') || process.env.SHOPEE_APP_ID || '',
     shopee_api_url: setting('shopee_api_url') || process.env.SHOPEE_API_URL || 'https://open-api.affiliate.shopee.com.br/graphql',
     affiliate_id: setting('affiliate_id') || process.env.AFFILIATE_ID || '',
@@ -85,7 +85,8 @@ async function api(req, res, url) {
       return json(res, 202, { accepted: false, reason: 'Evento sem identificadores de mensagem/grupo' });
     }
 
-    if (setting('bot_active', '0') !== '1') {
+    const isBotActive = (setting('bot_active') || process.env.BOT_ACTIVE || '1') === '1';
+    if (!isBotActive) {
       log(null, 'warn', 'webhook_ignored', `Mensagem recebida de ${parsed.sourceRemoteId}, mas o Bot está INATIVO nas configurações.`);
       return json(res, 202, { accepted: false, reason: 'Bot inativo' });
     }

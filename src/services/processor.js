@@ -66,7 +66,7 @@ async function runOne() {
     db.prepare("UPDATE jobs SET status='done',updated_at=? WHERE id=?").run(now(), job.id);
   } catch (error) {
     const attempts = job.attempts + 1;
-    const max = Number(setting('max_attempts', 3));
+    const max = Number(setting('max_attempts') || process.env.MAX_ATTEMPTS || 3);
     if (attempts >= max) {
       db.prepare("UPDATE jobs SET status='dead',last_error=?,updated_at=? WHERE id=?").run(error.message, now(), job.id);
       fail(db.prepare('SELECT * FROM messages WHERE id=?').get(job.message_id), error.message);
