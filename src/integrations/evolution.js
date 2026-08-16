@@ -69,11 +69,10 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
   if (!c.instance) throw new Error('Instância da Evolution API não definida');
 
   const number = destination.includes('@') ? destination : `${destination}@g.us`;
-  const sendMode = setting('send_mode') || process.env.SEND_MODE || 'preview';
 
   let mediaPayload = null;
 
-  // 1. Mídia da mensagem original do WhatsApp (se a mensagem de origem foi enviada como imagem/mídia)
+  // 1. Mídia da mensagem original do WhatsApp (se foi enviada como imagem/vídeo)
   const isOriginalMedia = parsedMessage?.mediaType && ['image', 'video', 'document', 'audio'].includes(parsedMessage.mediaType);
   if (isOriginalMedia) {
     mediaPayload = parsedMessage.mediaUrl;
@@ -84,12 +83,12 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
     }
   }
 
-  // 2. Se o usuário escolheu o modo 'media' (Foto + Legenda) e temos a imagem da Shopee
-  if (sendMode === 'media' && !mediaPayload && productImageUrl) {
+  // 2. Foto oficial do produto da Shopee (PRINCIPAL)
+  if (!mediaPayload && productImageUrl) {
     mediaPayload = productImageUrl.endsWith('.jpg') ? productImageUrl : `${productImageUrl}.jpg`;
   }
 
-  // 3. Se houver mídia (seja a original ou no modo Foto), envia como sendMedia
+  // 3. Envio como Foto + Legenda (PRINCIPAL AUTOMÁTICO)
   if (mediaPayload) {
     try {
       return await call(`/message/sendMedia/${encodeURIComponent(c.instance)}`, {
@@ -104,11 +103,11 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
         })
       });
     } catch (mediaError) {
-      // Se falhar no envio de mídia, faz fallback transparente para sendText
+      // Se a Evolution API falhar no envio da imagem, faz fallback para sendText
     }
   }
 
-  // 4. Modo padrão 'preview' (ou fallback): Envia mensagem de texto com linkPreview: true para o WhatsApp gerar o preview original
+  // 4. Fallback automático: Envia mensagem de texto com linkPreview
   return call(`/message/sendText/${encodeURIComponent(c.instance)}`, {
     method: 'POST',
     body: JSON.stringify({

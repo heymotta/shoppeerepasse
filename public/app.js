@@ -218,12 +218,6 @@ const views = {
             <option value="1" ${s.bot_active === '1' ? 'selected' : ''}>Ativo (processar e enviar)</option>
           </select>
         </label>
-        <label class="field">Formato de Envio das Ofertas
-          <select name="send_mode">
-            <option value="preview" ${s.send_mode !== 'media' ? 'selected' : ''}>Preview original do WhatsApp (sendText)</option>
-            <option value="media" ${s.send_mode === 'media' ? 'selected' : ''}>Foto do produto + legenda (sendMedia)</option>
-          </select>
-        </label>
         <label class="field">Enviar mensagens sem link?
           <select name="send_without_link">
             <option value="0" ${s.send_without_link !== '1' ? 'selected' : ''}>Não (ignorar mensagens sem link)</option>
