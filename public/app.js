@@ -138,7 +138,7 @@ const views = {
 
         <form id="group-form" class="form-grid" style="margin-top:22px">
           <div class="field full">
-            <button type="button" class="secondary" id="fetch-evo-groups">🔍 Buscar grupos conectados na Evolution API</button>
+            <button type="button" class="secondary" id="fetch-evo-groups">Buscar grupos conectados na Evolution API</button>
             <select id="evo-group-select" class="full" style="display:none;margin-top:6px">
               <option value="">Selecione um grupo retornado...</option>
             </select>
@@ -368,7 +368,7 @@ document.addEventListener('click', async e => {
       alert(`Erro ao buscar grupos: ${err.message}`);
     } finally {
       btn.disabled = false;
-      btn.textContent = '🔍 Buscar grupos conectados na Evolution API';
+      btn.textContent = 'Buscar grupos conectados na Evolution API';
     }
   }
 });

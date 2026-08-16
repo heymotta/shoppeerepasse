@@ -72,23 +72,23 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
 
   let mediaPayload = null;
 
-  // 1. Mídia da mensagem original do WhatsApp (se foi enviada como imagem/vídeo)
+  // 1. Se a mensagem de origem foi enviada como imagem no WhatsApp, tenta obter o base64 descriptografado
   const isOriginalMedia = parsedMessage?.mediaType && ['image', 'video', 'document', 'audio'].includes(parsedMessage.mediaType);
-  if (isOriginalMedia) {
-    mediaPayload = parsedMessage.mediaUrl;
-    if (rawEvent) {
-      const msgObj = rawEvent.data?.message || rawEvent.message || rawEvent;
-      const base64 = await getBase64FromMedia(msgObj);
-      if (base64) mediaPayload = base64;
+  if (isOriginalMedia && rawEvent) {
+    const msgObj = rawEvent.data?.message || rawEvent.message || rawEvent;
+    const base64 = await getBase64FromMedia(msgObj);
+    if (base64) {
+      mediaPayload = base64;
     }
   }
 
-  // 2. Foto oficial do produto da Shopee (PRINCIPAL)
+  // 2. Se não conseguiu o base64 da mensagem de origem (ou se a mensagem de origem era só texto),
+  // utiliza a foto oficial do produto extraída diretamente da Shopee CDN (100% GARANTIDO)
   if (!mediaPayload && productImageUrl) {
     mediaPayload = productImageUrl.endsWith('.jpg') ? productImageUrl : `${productImageUrl}.jpg`;
   }
 
-  // 3. Envio como Foto + Legenda (PRINCIPAL AUTOMÁTICO)
+  // 3. Se tivermos uma imagem válida (base64 ou URL da Shopee), envia como sendMedia
   if (mediaPayload) {
     try {
       return await call(`/message/sendMedia/${encodeURIComponent(c.instance)}`, {
@@ -103,11 +103,11 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
         })
       });
     } catch (mediaError) {
-      // Se a Evolution API falhar no envio da imagem, faz fallback para sendText
+      // Se a imagem falhar, faz fallback para sendText
     }
   }
 
-  // 4. Fallback automático: Envia mensagem de texto com linkPreview
+  // 4. Fallback final: Envia mensagem de texto com linkPreview
   return call(`/message/sendText/${encodeURIComponent(c.instance)}`, {
     method: 'POST',
     body: JSON.stringify({
