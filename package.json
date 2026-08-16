@@ -1,0 +1,17 @@
+{
+  "name": "shopee-offers-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bot de ofertas Shopee com Evolution API, fila persistente e painel administrativo.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "worker": "node src/worker.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=22.5" },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}
