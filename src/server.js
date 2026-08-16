@@ -35,6 +35,7 @@ function safeSettings() {
     request_timeout: setting('request_timeout') || process.env.REQUEST_TIMEOUT || '15000',
     max_attempts: setting('max_attempts') || process.env.MAX_ATTEMPTS || '3',
     send_without_link: setting('send_without_link') || process.env.SEND_WITHOUT_LINK || '0',
+    send_mode: setting('send_mode') || process.env.SEND_MODE || 'preview',
     bot_active: setting('bot_active') || process.env.BOT_ACTIVE || '1',
     shopee_app_id: setting('shopee_app_id') || process.env.SHOPEE_APP_ID || '',
     shopee_api_url: setting('shopee_api_url') || process.env.SHOPEE_API_URL || 'https://open-api.affiliate.shopee.com.br/graphql',
@@ -135,7 +136,7 @@ async function api(req, res, url) {
 
   if (req.method === 'PUT' && url.pathname === '/api/settings') {
     const b = await body(req);
-    const textKeys = ['evolution_url', 'evolution_instance', 'request_timeout', 'max_attempts', 'send_without_link', 'bot_active', 'shopee_app_id', 'shopee_api_url', 'affiliate_id'];
+    const textKeys = ['evolution_url', 'evolution_instance', 'request_timeout', 'max_attempts', 'send_without_link', 'send_mode', 'bot_active', 'shopee_app_id', 'shopee_api_url', 'affiliate_id'];
     for (const key of textKeys) {
       if (b[key] !== undefined) setSetting(key, b[key]);
     }
