@@ -85,24 +85,30 @@ async function send(parsedMessage, destination, text, rawEvent = null, productIm
 
   // 2. Se a mensagem não era imagem, mas temos a URL da imagem do produto da Shopee
   if (!mediaPayload && productImageUrl) {
-    mediaPayload = productImageUrl;
+    mediaPayload = productImageUrl.endsWith('.jpg') ? productImageUrl : `${productImageUrl}.jpg`;
   }
 
-  // Se tivermos imagem (original ou da Shopee), envia como foto + legenda no WhatsApp
+  // Se tivermos imagem, tenta enviar como foto + legenda
   if (mediaPayload) {
-    return call(`/message/sendMedia/${encodeURIComponent(c.instance)}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        number,
-        mediatype: 'image',
-        media: mediaPayload,
-        caption: text,
-        fileName: 'oferta.jpg'
-      })
-    });
+    try {
+      return await call(`/message/sendMedia/${encodeURIComponent(c.instance)}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          number,
+          mediatype: 'image',
+          mimetype: 'image/jpeg',
+          media: mediaPayload,
+          caption: text,
+          fileName: 'oferta.jpeg'
+        })
+      });
+    } catch (mediaError) {
+      // Se a Evolution API falhar ao processar a imagem (ex: formato não suportado ou erro 500 no sharp),
+      // faz fallback transparente para envio de texto com linkPreview para NUNCA perder o envio da oferta!
+    }
   }
 
-  // 3. Caso contrário, envia como mensagem de texto com linkPreview
+  // 3. Fallback ou envio padrão: mensagem de texto com linkPreview ativo
   return call(`/message/sendText/${encodeURIComponent(c.instance)}`, {
     method: 'POST',
     body: JSON.stringify({

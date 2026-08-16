@@ -55,13 +55,11 @@ async function resolveToCanonicalShopeeUrl(url) {
   if (!url) return url;
   let targetUrl = url.trim();
 
-  // Se já for uma URL canônica de produto
   const directMatch = targetUrl.match(/(?:product\/|\/opaanlp\/)(\d+)\/(\d+)/i) || targetUrl.match(/-i\.(\d+)\.(\d+)/i);
   if (directMatch) {
     return `https://shopee.com.br/product/${directMatch[1]}/${directMatch[2]}`;
   }
 
-  // Se for shortlink (s.shopee.com.br ou shp.ee), resolve o redirecionamento
   try {
     const res = await fetch(targetUrl, {
       method: 'GET',
@@ -122,7 +120,9 @@ async function getProductImage(textContent) {
       }`;
       const data = await callShopee(query, { keyword: q });
       const img = data?.productOfferV2?.nodes?.[0]?.imageUrl;
-      if (img) return img;
+      if (img) {
+        return img.endsWith('.jpg') ? img : `${img}.jpg`;
+      }
     } catch (e) {}
   }
   return null;
