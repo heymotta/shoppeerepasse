@@ -3,6 +3,35 @@ const evolution = require('../integrations/evolution');
 const shopee = require('../integrations/shopee');
 const { replaceUrl, parse } = require('./parser');
 
+// Padrões de linhas indesejadas que devem ser removidas antes de enviar
+const FILTER_PATTERNS = [
+  /siga\s+(?:a\s+gente|nos|nosso|no)\s+(?:no\s+)?instagram/i,
+  /nos\s+siga\s+no\s+instagram/i,
+  /segue\s+(?:a\s+gente|nosso|no)\s+(?:no\s+)?instagram/i,
+  /segue\s+l[aá]\s+no\s+insta/i,
+  /@[\w._]+\s*$/i,  // linhas que terminam com @usuario (perfil de rede social)
+  /siga\s+(?:a\s+gente|nos)\s+(?:no\s+)?(?:twitter|tiktok|facebook|telegram|youtube)/i,
+  /entre\s+(?:no|em)\s+nosso\s+(?:grupo|canal)\s+(?:do\s+)?telegram/i,
+];
+
+/**
+ * Remove linhas indesejadas do texto (ex: "siga no instagram @perfil")
+ */
+function filterText(text) {
+  if (!text) return text;
+  const lines = text.split(/\r?\n/);
+  const filtered = lines.filter(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return true; // preserva linhas em branco originais
+    for (const pattern of FILTER_PATTERNS) {
+      if (pattern.test(trimmed)) return false;
+    }
+    return true;
+  });
+  // Remove linhas em branco consecutivas que ficaram após a filtragem
+  return filtered.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 async function processJob(job) {
   const message = db.prepare('SELECT * FROM messages WHERE id=?').get(job.message_id);
   if (!message) return;
@@ -30,7 +59,8 @@ async function processJob(job) {
     return fail(message, result.reason || 'Não foi possível gerar o link de afiliado para este produto da Shopee', 'failed');
   }
 
-  const outgoing = replaceUrl(message.text_content, message.original_url, result.url);
+  const rawOutgoing = replaceUrl(message.text_content, message.original_url, result.url);
+  const outgoing = filterText(rawOutgoing);
 
   let rawEvent = null;
   let parsed = { text: outgoing };
