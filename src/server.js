@@ -191,6 +191,9 @@ async function api(req, res, url) {
 
   if (req.method === 'DELETE' && url.pathname.startsWith('/api/groups/')) {
     const id = Number(url.pathname.split('/').pop());
+    // Remove referências FK antes de deletar o grupo
+    db.prepare('DELETE FROM routing_rules WHERE source_id=? OR destination_id=?').run(id, id);
+    db.prepare('UPDATE messages SET source_group_id=NULL WHERE source_group_id=?').run(id);
     db.prepare('DELETE FROM groups WHERE id=?').run(id);
     return json(res, 200, { ok: true });
   }
