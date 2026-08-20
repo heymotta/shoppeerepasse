@@ -5,13 +5,24 @@ const { replaceUrl, parse } = require('./parser');
 
 // Padrões de linhas indesejadas que devem ser removidas antes de enviar
 const FILTER_PATTERNS = [
+  // Links de redes sociais
+  /instagram\.com/i,
+  /tiktok\.com/i,
+  /facebook\.com\/(?!tr\?)/i,  // não filtra pixel do facebook
+  /twitter\.com/i,
+  /x\.com\/\w+/i,
+  /t\.me\//i,
+  /youtube\.com/i,
+  /youtu\.be/i,
+  // Frases de "siga-nos"
   /siga\s+(?:a\s+gente|nos|nosso|no)\s+(?:no\s+)?instagram/i,
   /nos\s+siga\s+no\s+instagram/i,
   /segue\s+(?:a\s+gente|nosso|no)\s+(?:no\s+)?instagram/i,
   /segue\s+l[aá]\s+no\s+insta/i,
-  /@[\w._]+\s*$/i,  // linhas que terminam com @usuario (perfil de rede social)
   /siga\s+(?:a\s+gente|nos)\s+(?:no\s+)?(?:twitter|tiktok|facebook|telegram|youtube)/i,
   /entre\s+(?:no|em)\s+nosso\s+(?:grupo|canal)\s+(?:do\s+)?telegram/i,
+  // Linhas que são só um @usuario (perfil de rede social)
+  /^\s*@[\w._]+\s*$/i,
 ];
 
 /**
